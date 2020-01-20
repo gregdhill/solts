@@ -2,6 +2,7 @@ import program from 'commander';
 import * as solc from 'solc';
 import fs from 'fs';
 import { Contract, Provider, Print } from './generate';
+import { ImportReadable } from './syntax';
 
 function compileSolidity(source: string, name: string) {
     const compiled: solc.OutputDescription = JSON.parse(solc.compile(source));
@@ -24,7 +25,9 @@ program
         const compiled = compileSolidity(input, src);
 
         const provider = new Provider();
-        let target = [Print(provider.createInterface())];
+
+        const target = [Print(ImportReadable())];
+        target.push(Print(provider.createInterface()));
 
         for (let k in compiled) {
             const contract = compiled[k];

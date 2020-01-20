@@ -1,13 +1,14 @@
 import ts from "typescript";
 
 export const Uint8ArrayType = ts.createTypeReferenceNode("Uint8Array", undefined);
+export const ErrorType = ts.createTypeReferenceNode("Error", undefined);
 export const VoidType = ts.createTypeReferenceNode("void", undefined);
 export const StringType = ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 export const NumberType = ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
 export const BooleanType = ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
 export const AnyType = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
-export const ErrorType = ts.createTypeReferenceNode("Error", undefined);
 export const PromiseType = ts.createIdentifier("Promise");
+export const ReadableType = ts.createIdentifier("Readable");
 export const TupleType = (elements: ts.TypeNode[]) => ts.createTupleTypeNode(elements);
 
 export const PrivateToken = ts.createToken(ts.SyntaxKind.PrivateKeyword);
@@ -20,6 +21,7 @@ export const accessThis = (name: ts.Identifier) => ts.createPropertyAccess(ts.cr
 export const accessThisProperty = (prop: ts.Identifier, fn: ts.Identifier) => ts.createPropertyAccess(accessThis(prop), fn);
 export const bufferFrom = (...args: ts.Expression[]) => createCall(ts.createPropertyAccess(ts.createIdentifier("Buffer"), ts.createIdentifier("from")), args);
 export const asArray = (type: ts.TypeNode) => ts.createArrayTypeNode(type);
+export const asRefNode = (id: ts.Identifier) => ts.createTypeReferenceNode(id, undefined);
 
 export function createParameter(
     name: string | ts.Identifier,
@@ -76,7 +78,15 @@ export function createCallbackDeclaration(first: ts.Identifier, second: ts.Ident
     )
 }
 
-export function createCallbackExpression(error: ts.Identifier, success: ts.Identifier) {
-    return ts.createFunctionTypeNode(undefined, [createParameter(error, ErrorType), createParameter(success, Uint8ArrayType)], VoidType)
+export function createCallbackExpression(params: ts.ParameterDeclaration[]) {
+    return ts.createFunctionTypeNode(undefined, params, VoidType)
 }
 
+function ImportFrom(thing: ts.Identifier, pkg: string) {
+    return ts.createImportDeclaration(undefined, undefined, 
+        ts.createImportClause(undefined, ts.createNamedImports([ts.createImportSpecifier(undefined, thing)])), ts.createLiteral(pkg));
+}
+
+export function ImportReadable() {
+    return ImportFrom(ReadableType, 'stream');
+}

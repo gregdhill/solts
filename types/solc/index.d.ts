@@ -52,7 +52,7 @@ declare module 'solc' {
         }
         functionHashes: any
         gasEstimates: any
-        abi: ABIFunction[]
+        abi: (ABIFunction | ABIEvent)[]
         opcodes: string
         runtimeBytecode: string
         srcmap: string
