@@ -63,10 +63,6 @@ declare module 'solc' {
         AST: any
     }
 
-    interface SourceMap {
-        [key: string]: Source;
-    }
-
     export type InputDescription = {
         language: string
         sources?: Record<string, { content: string }>
@@ -74,12 +70,25 @@ declare module 'solc' {
             outputSelection: Record<string, Record<string, Array<string>>>
         }
     }
+
+    type Error = {
+        sourceLocation?: {
+            file: string,
+            start: number,
+            end: number
+        },
+        type: string,
+        component: string,
+        severity: "error" | "warning",
+        message: string
+        formattedMessage?: string,
+    }
     
     export type OutputDescription = {
         contracts: Record<string, Record<string, Contract>>
-        errors: Array<string>
+        errors: Array<Error>
         sourceList: Array<string>
-        sources: SourceMap
+        sources: Record<string, Source>
     }
 
     export function compile(input: string): string;

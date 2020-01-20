@@ -7,6 +7,9 @@
     "test": "mocha -r ts-node/register src/*.test.ts",
     "start": "node bin/index.js"
   },
+  "bin": {
+    "ts-sol": "bin/index.js"
+  },
   "author": "Gregory Hill",
   "license": "ISC",
   "dependencies": {

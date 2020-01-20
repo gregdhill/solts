@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import program from 'commander';
 import * as solc from 'solc';
 import fs from 'fs';
@@ -6,7 +8,7 @@ import { ImportReadable } from './syntax';
 
 function compileSolidity(source: string, name: string) {
     const compiled: solc.OutputDescription = JSON.parse(solc.compile(source));
-    if (compiled.errors) throw new Error(compiled.errors.toString());
+    if (compiled.errors) throw new Error(compiled.errors.map(err => err.formattedMessage).toString());
     return compiled.contracts[name];
 }
 
