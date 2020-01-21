@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Keccak } from 'sha3';
-import { ABIFunction, ABIEvent, ABIFunctionIO, ABIEventInput } from 'solc';
+import { Function, Event, FunctionInput, FunctionOutput, EventInput } from 'solc';
 
 import { 
     StringType, VoidType, Uint8ArrayType, AnyType, NumberType, BooleanType, PromiseType, TupleType, ErrorType, ReadableType,
@@ -8,25 +8,26 @@ import {
     createParameter, createCall, createCallbackExpression, createCallbackDeclaration, createNewPromise, createPromiseBody, 
 } from './syntax';
 
-type FunctionOrEvent = ABIFunction | ABIEvent;
+type FunctionOrEvent = Function | Event;
+type FunctionIO = FunctionInput & FunctionOutput;
 
-function hash(str: string) {
+export function Hash(str: string) {
     const hash = (new Keccak(256)).update(str);
     return hash.digest('hex').toUpperCase();
 }
 
-function getRealType(obj: ABIFunctionIO): ts.TypeNode {
+export function NameFromABI(abi: Function | Event): string {
+    if (abi.name.indexOf('(') !== -1) return abi.name;
+    const typeName = (abi.inputs as (EventInput | FunctionIO)[]).map(i => i.type).join();
+    return abi.name + '(' + typeName + ')';
+}
+
+function getRealType(obj: FunctionIO): ts.TypeNode {
     const type = obj.type;
     if (/int/i.test(type)) return NumberType;
     else if (/bool/i.test(type)) return BooleanType;
     else if (/tuple/i.test(type)) return TupleType(obj.components.map(comp => getRealType(comp)));
     else return StringType; // address, bytes
-}
-
-function toFullName(abi: ABIFunction | ABIEvent): string {
-    if (abi.name.indexOf('(') !== -1) return abi.name;
-    const typeName = (abi.inputs as (ABIEventInput | ABIFunctionIO)[]).map(i => i.type).join();
-    return abi.name + '(' + typeName + ')';
 }
 
 export function Print(node: ts.Node) {
@@ -35,7 +36,7 @@ export function Print(node: ts.Node) {
     return printer.printNode(ts.EmitHint.Unspecified, node, target)
 }
 
-function SolidityFunction(cont: Contract, abi: ABIFunction) {
+function SolidityFunction(cont: Contract, abi: Function) {
     const name = ts.createIdentifier(abi.name);
     const parameters = abi.inputs.map(arg => createParameter(arg.name, getRealType(arg)));
 
@@ -46,7 +47,7 @@ function SolidityFunction(cont: Contract, abi: ABIFunction) {
     const data = ts.createIdentifier("data");
     const payload = ts.createIdentifier("payload");
 
-    const fn = hash(toFullName(abi)).slice(0, 8);
+    const fn = Hash(NameFromABI(abi)).slice(0, 8);
     const inputs = ts.createArrayLiteral(abi.inputs.map(arg => ts.createLiteral(arg.type)));
     const args = abi.inputs.map(arg => ts.createIdentifier(arg.name));
 
@@ -73,7 +74,7 @@ function SolidityFunction(cont: Contract, abi: ABIFunction) {
 
     return ts.createMethod(
         undefined,
-        [],
+        undefined,
         undefined,
         name,
         undefined,
@@ -84,7 +85,7 @@ function SolidityFunction(cont: Contract, abi: ABIFunction) {
     );
 }
 
-function SolidityEvent(cont: Contract, abi: ABIEvent) {
+function SolidityEvent(cont: Contract, abi: Event) {
     const name = ts.createIdentifier(abi.name);
     const callback = ts.createIdentifier("callback");
     const parameters = [createParameter(callback, createCallbackExpression([
@@ -94,14 +95,14 @@ function SolidityEvent(cont: Contract, abi: ABIEvent) {
 
     const statements = [
         ts.createReturn(createCall(accessThisProperty(cont.client, cont.provider.methods.listen), [
-            ts.createLiteral(hash(toFullName(abi))),
+            ts.createLiteral(Hash(NameFromABI(abi))),
             accessThis(cont.address), callback
         ])),
     ];
 
     return ts.createMethod(
         undefined,
-        [],
+        undefined,
         undefined,
         name,
         undefined,
@@ -203,7 +204,7 @@ export class Contract {
         ];
     }
 
-    createDeploy(abi?: ABIFunction) {
+    createDeploy(abi?: Function) {
         const name = this.methods.deploy;
         const parameters = (abi) ? abi.inputs.map(input => createParameter(input.name, getRealType(input))) : [];
         const output = ts.createExpressionWithTypeArguments([this.type], PromiseType);
@@ -234,7 +235,7 @@ export class Contract {
         statements.push(ts.createReturn(createNewPromise([ts.createStatement(deployFnCall)])));
         return ts.createMethod(
             undefined,
-            [],
+            undefined,
             undefined,
             name,
             undefined,
@@ -275,7 +276,7 @@ export class Contract {
     }
     
     createClass() {
-        let deploy: ABIFunction;
+        let deploy: Function;
         let methods: FunctionOrEvent[] = [];
         this.abi.map(abi =>
             (abi.type == 'constructor') ? deploy = abi : methods.push(abi));

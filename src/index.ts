@@ -20,15 +20,16 @@ function toInputDescription(name: string, source: string) {
 }
 
 program
-    .command('generate <source> [destination]')
+    .name('ts-sol')
+    .arguments("<source> [destination]")
+    .description('Generate typescript classes for a Solidity contract. If no destination specified, print result to STDOUT.')
     .action(function (src, dst) {
         const source = fs.readFileSync(src, 'utf8');
         const input = toInputDescription(src, source);
         const compiled = compileSolidity(input, src);
 
-        const provider = new Provider();
-
         const target = [Print(ImportReadable())];
+        const provider = new Provider();
         target.push(Print(provider.createInterface()));
 
         for (let k in compiled) {
@@ -42,8 +43,5 @@ program
     });
 
 program.parse(process.argv);
+program.outputHelp();
 process.exit(1);
-
-
-
-  

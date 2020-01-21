@@ -1,42 +1,30 @@
 declare module 'solc' {
-    export type ABIFunction = {
-        type: ABIType
-        name: string,
-        inputs: Array<ABIFunctionIO>,
-        outputs?: Array<ABIFunctionIO>,
-        stateMutability: ABIMutability,
-        payable: false,
-        constant: boolean,
-    }
+    export type Function = {
+        type: 'function' | 'constructor' | 'fallback'
+        name: string
+        inputs: Array<FunctionInput>
+        outputs?: Array<FunctionOutput>
+        stateMutability: 'pure' | 'view' | 'nonpayable' | 'payable'
+        payable?: boolean
+        constant?: boolean
+    };
 
-    export type ABIEvent = {
+    export type Event = {
         type: 'event'
-        name: string,
-        inputs: Array<ABIEventInput>,
-        anonymous: boolean,
-    }
+        name: string
+        inputs: Array<EventInput>
+        anonymous: boolean
+    };
     
-    export enum ABIType {
-        function = "function",
-        constructor = "constructor",
-        fallback = "fallback",
-    }
-    
-    export enum ABIMutability {
-        pure = "pure",
-        view = "view",
-        nonpayable = "nonpayable",
-        payable = "payable",
-    }
-    
-    export type ABIFunctionIO = {
+    export type FunctionInput = {
         name: string
         type: string
-        components?: ABIFunctionIO[]
+        components?: FunctionInput[]
         internalType?: string
     };
 
-    export type ABIEventInput = ABIFunctionIO & {indexed?: boolean};
+    export type FunctionOutput = FunctionInput;
+    export type EventInput = FunctionInput & {indexed?: boolean};
 
     type Bytecode = {
         linkReferences: any
@@ -52,7 +40,7 @@ declare module 'solc' {
         }
         functionHashes: any
         gasEstimates: any
-        abi: (ABIFunction | ABIEvent)[]
+        abi: (Function | Event)[]
         opcodes: string
         runtimeBytecode: string
         srcmap: string
@@ -76,12 +64,12 @@ declare module 'solc' {
             file: string,
             start: number,
             end: number
-        },
-        type: string,
+        }
+        type: string
         component: string,
-        severity: "error" | "warning",
+        severity: "error" | "warning"
         message: string
-        formattedMessage?: string,
+        formattedMessage?: string
     }
     
     export type OutputDescription = {
