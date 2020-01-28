@@ -5,5 +5,5 @@
 Generate class definitions from a Solidity contract:
 
 ```shell
-ts-sol sol/Storage.sol Storage.ts
+solc sol/Storage.sol --combined-json abi,bin | ts-sol -
 ```

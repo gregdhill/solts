@@ -1,6 +1,6 @@
 import assert from 'assert';
 import ts from "typescript";
-import { createParameter, createCallbackExpression } from './syntax';
+import { CreateParameter, CreateCallbackExpression } from './syntax';
 
 function print(node: ts.Node) {
     const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
@@ -10,9 +10,9 @@ function print(node: ts.Node) {
 describe('syntax helpers', function () {
   it('should create callback expression', async function () {
     const ErrAndResult = [
-        createParameter(ts.createIdentifier("err"), undefined), 
-        createParameter(ts.createIdentifier("result"), undefined)
+        CreateParameter(ts.createIdentifier("err"), undefined), 
+        CreateParameter(ts.createIdentifier("result"), undefined)
     ];
-    assert.equal(print(createCallbackExpression(ErrAndResult)), '(err, result) => void');
+    assert.equal(print(CreateCallbackExpression(ErrAndResult)), '(err, result) => void');
   })
 })

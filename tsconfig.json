@@ -2,7 +2,6 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "bin",
-    "allowJs": false,
     "preserveSymlinks": true,
     "esModuleInterop": true,
     "sourceMap": true,

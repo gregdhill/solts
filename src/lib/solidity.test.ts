@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Hash, NameFromABI } from './generate';
+import { Hash, NameFromABI } from './solidity';
 import { Function } from 'solc';
 
 describe('abi helpers', function () {

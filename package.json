@@ -2,13 +2,18 @@
   "name": "ts-sol",
   "version": "0.0.1",
   "description": "Solidity to Typescript",
-  "main": "bin/index.js",
+  "main": "bin/api.js",
   "scripts": {
+    "build": "rm -rf bin && tsc --build",
     "test": "mocha -r ts-node/register src/*.test.ts",
-    "start": "node bin/index.js"
+    "start": "node bin/main.js"
   },
+  "files": [
+    "bin/",
+    "proto/"
+  ],
   "bin": {
-    "ts-sol": "bin/index.js"
+    "ts-sol": "bin/main.js"
   },
   "author": "Gregory Hill",
   "license": "ISC",

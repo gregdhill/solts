@@ -2,7 +2,7 @@ declare module 'solc' {
     export type Function = {
         type: 'function' | 'constructor' | 'fallback'
         name: string
-        inputs: Array<FunctionInput>
+        inputs?: Array<FunctionInput>
         outputs?: Array<FunctionOutput>
         stateMutability: 'pure' | 'view' | 'nonpayable' | 'payable'
         payable?: boolean
