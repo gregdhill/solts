@@ -1,9 +1,10 @@
 import ts from "typescript";
-import { CreateParameter, Uint8ArrayType, DeclareConstant, CreateNewPromise, PromiseType, AccessThis, CreateCallbackDeclaration, RejectOrResolve, CreateCall, BufferFrom, ExportToken, StringType } from "./syntax";
+import { CreateParameter, DeclareConstant, CreateNewPromise, PromiseType, CreateCallbackDeclaration, RejectOrResolve, CreateCall, BufferFrom, ExportToken, DeclareLet, StringType } from "./syntax";
 import { Provider } from "./provider";
-import { Function, Event } from 'solc';
-import { GetRealType } from './solidity';
+import { Function } from 'solc';
+import { GetRealType, TokenizeString, Hash } from './solidity';
 import { ContractName } from "./contract";
+import { ReplacerName } from "./replacer";
 
 const data = ts.createIdentifier("data");
 const payload = ts.createIdentifier("payload");
@@ -14,16 +15,27 @@ const addr = ts.createIdentifier("addr");
 
 const client = ts.createIdentifier("client");
 const address = ts.createIdentifier("address");
-const callback = ts.createIdentifier('linker');
 
 export const DeployName = ts.createIdentifier('Deploy');
 
-export const Deploy = (abi: Function, bin: string, provider: Provider) => {
-    const parameters = (abi) ? abi.inputs.map(input => CreateParameter(input.name, GetRealType(input))) : [];
-    const output = ts.createExpressionWithTypeArguments([ts.createTypeReferenceNode(ContractName, [ts.createTypeReferenceNode('Tx', undefined)])], PromiseType);
+export const Deploy = (abi: Function, bin: string, links: string[], provider: Provider) => {
+    if (bin === "") return undefined;
+
+    const parameters = (abi) ? abi.inputs.map(input => CreateParameter(input.name, GetRealType(input.type))) : [];
+    // const output = ts.createExpressionWithTypeArguments([ts.createTypeReferenceNode(ContractName, [ts.createTypeReferenceNode('Tx', undefined)])], PromiseType);
+    const output = ts.createExpressionWithTypeArguments([StringType], PromiseType);
 
     let statements: ts.Statement[] = [];
-    statements.push(DeclareConstant(bytecode, CreateCall(callback, [ts.createLiteral(bin)])));
+    statements.push(DeclareLet(bytecode, ts.createLiteral(bin)));
+    statements.push(...links.map(link => {
+        return ts.createExpressionStatement(ts.createAssignment(bytecode, CreateCall(ReplacerName, 
+            [
+                bytecode,
+                ts.createStringLiteral('$' + Hash(link).toLowerCase().slice(0, 34) + '$'),
+                ts.createIdentifier(TokenizeString(link))
+            ]
+        )))
+    }))
 
     if (abi) {
         const inputs = ts.createArrayLiteral(abi.inputs.map(arg => ts.createLiteral(arg.type)));
@@ -32,18 +44,21 @@ export const Deploy = (abi: Function, bin: string, provider: Provider) => {
             provider.methods.encode.call(client, ts.createLiteral(""), inputs, ...args)
         )));            
     } else statements.push(DeclareConstant(data, bytecode));
-
     statements.push(DeclareConstant(payload, provider.methods.payload.call(client, data, undefined)));
 
     const deployFn = provider.methods.deploy.call(
         client,
         payload, 
         CreateCallbackDeclaration(err, addr, [
-            RejectOrResolve(err, [
-                DeclareConstant(address, CreateCall(ts.createPropertyAccess(
-                        CreateCall(ts.createPropertyAccess(
-                            BufferFrom(addr), ts.createIdentifier("toString")), [ts.createLiteral("hex")]), ts.createIdentifier("toUpperCase")), undefined))
-            ], [ts.createNew(ContractName, [], [client, address])])
+            RejectOrResolve(err, 
+                [
+                    DeclareConstant(address, CreateCall(ts.createPropertyAccess(
+                            CreateCall(ts.createPropertyAccess(
+                                BufferFrom(addr), ts.createIdentifier("toString")), [ts.createLiteral("hex")]), ts.createIdentifier("toUpperCase")), undefined))
+                ], 
+                // [ts.createNew(ContractName, [], [client, address])])
+                [address]
+            ),
         ], undefined, true)
     );
     
@@ -58,7 +73,7 @@ export const Deploy = (abi: Function, bin: string, provider: Provider) => {
         [ts.createTypeParameterDeclaration(type)], 
         [
             CreateParameter(client, ts.createTypeReferenceNode('Provider', [ts.createTypeReferenceNode(type, [])])),
-            CreateParameter(callback, ts.createFunctionTypeNode(undefined, [CreateParameter('bytecode', StringType)], StringType)),
+            ...links.map(link => CreateParameter(ts.createIdentifier(TokenizeString(link)), StringType)),
             ...parameters
         ], 
         output, 

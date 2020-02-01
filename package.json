@@ -1,11 +1,12 @@
 {
-  "name": "ts-sol",
+  "name": "solts",
   "version": "0.0.1",
   "description": "Solidity to Typescript",
   "main": "bin/api.js",
+  "types": "bin/api.d.ts",
   "scripts": {
     "build": "rm -rf bin && tsc --build",
-    "test": "mocha -r ts-node/register src/*.test.ts",
+    "test": "mocha -r ts-node/register src/**/*.test.ts",
     "start": "node bin/main.js"
   },
   "files": [

@@ -7,12 +7,10 @@ import {
     CreateParameter, CreateCall, CreateCallbackExpression, CreateCallbackDeclaration, CreateNewPromise, RejectOrResolve, Uint8ArrayType, PublicToken
 } from './syntax';
 
-import { Hash, NameFromABI, GetRealType, OutputToType } from './solidity';
+import { Hash, NameFromABI, GetRealType, OutputToType, FunctionOrEvent, ContractMethods, Signature, CollapseInputs, CombineTypes, ContractMethodsList } from './solidity';
 import { EncodeName } from "./encoder";
 import { DecodeName } from "./decoder";
 import { CallName } from "./caller";
-
-type FunctionOrEvent = Function | Event;
 
 const exec = ts.createIdentifier("exec");
 const data = ts.createIdentifier("data");
@@ -21,14 +19,14 @@ const address = ts.createIdentifier("address");
 
 export const ContractName = ts.createIdentifier('Contract');
 
-function SolidityFunction(abi: Function, provider: Provider) {
-    const args = abi.inputs.map(arg => ts.createIdentifier(arg.name));
+function SolidityFunction(name: string, signatures: Signature[], provider: Provider) {
+    const args = Array.from(CollapseInputs(signatures).keys()).map(key => ts.createIdentifier(key));
     const encode = DeclareConstant(data, 
-        CreateCall(ts.createPropertyAccess(CreateCall(EncodeName, [AccessThis(client)]), abi.name), args));
+        CreateCall(ts.createPropertyAccess(CreateCall(EncodeName, [AccessThis(client)]), name), args));
 
     const call = ts.createCall(CallName, [
         ts.createTypeReferenceNode('Tx', undefined),
-        OutputToType(abi),
+        OutputToType(signatures[0]),
     ], [
         AccessThis(client),
         AccessThis(address),
@@ -43,7 +41,7 @@ function SolidityFunction(abi: Function, provider: Provider) {
                             DecodeName, 
                             [AccessThis(client), exec]
                         ),
-                        abi.name
+                        name
                     ),
                     []
                 ), 
@@ -51,36 +49,37 @@ function SolidityFunction(abi: Function, provider: Provider) {
         ], true))
     ]);
 
-    return new Method(abi.name)
-        .parameters(abi.inputs.filter(arg => arg.name !== "")
-            .map(arg => CreateParameter(arg.name, GetRealType(arg))))
+    const params = Array.from(CollapseInputs(signatures), ([key, value]) => CreateParameter(key, CombineTypes(value)));
+    return new Method(name)
+        .parameters(params)
         .declaration([
             encode,
             ts.createReturn(call)
         ], true);
 }
 
-function SolidityEvent(abi: Event, provider: Provider) {
+function SolidityEvent(name: string, provider: Provider) {
     const callback = ts.createIdentifier("callback");
-    return new Method(abi.name)
+    return new Method(name)
         .parameter(callback, CreateCallbackExpression([ErrParameter, EventParameter]))
         .returns(AsRefNode(ReadableType))
         .declaration([
             ts.createReturn(provider.methods.listen.call(
                 AccessThis(client), 
-                ts.createLiteral(Hash(NameFromABI(abi))),
+                ts.createLiteral(name),
                 AccessThis(address),
                 callback
             )),
         ]);
 }
 
-function createMethodFromABI(abi: FunctionOrEvent, provider: Provider) {
-    if (abi.type === 'function') return SolidityFunction(abi, provider);
-    else if (abi.type === 'event') return SolidityEvent(abi, provider);
+function createMethodFromABI(name: string, type: 'function' | 'event', signatures: Signature[], provider: Provider) {
+    if (type === 'function') return SolidityFunction(name, signatures, provider);
+    else if (type === 'event') return SolidityEvent(name, provider);
 }
 
-export const Contract = (abi: FunctionOrEvent[], provider: Provider) => {
+export const Contract = (abi: ContractMethodsList, provider: Provider) => {
+
     return ts.createClassDeclaration(
         undefined,
         [ExportToken],
@@ -102,7 +101,7 @@ export const Contract = (abi: FunctionOrEvent[], provider: Provider) => {
                     ts.createStatement(ts.createAssignment(AccessThis(address), address))            
                 ], true)
             ),
-            ...abi.map(m => createMethodFromABI(m, provider))
+            ...abi.map(abi => createMethodFromABI(abi.name, abi.type, abi.signatures, provider)),
         ],
     );
 }

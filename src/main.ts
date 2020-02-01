@@ -39,7 +39,8 @@ async function main() {
                 compiled.push({ 
                     name: k, 
                     abi: JSON.parse(input.contracts[k].abi),
-                    bin: input.contracts[k].bin
+                    bin: input.contracts[k].bin,
+                    links: [],
                 });
             }
 

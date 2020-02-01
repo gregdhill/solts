@@ -1,9 +1,10 @@
 import ts from "typescript";
 import { Keccak } from 'sha3';
 import { Function, FunctionInput, FunctionOutput, Event, EventInput } from 'solc';
-import { StringType, NumberType, BooleanType, TupleType, BufferType, VoidType, AsRefNode, AsArray } from './syntax';
+import { StringType, NumberType, BooleanType, TupleType, BufferType, VoidType, AsRefNode, AsArray, AsTuple } from './syntax';
 
-type FunctionIO = FunctionInput & FunctionOutput;
+export type FunctionIO = FunctionInput & FunctionOutput;
+export type FunctionOrEvent = Function | Event;
 
 export function Hash(str: string) {
     const hash = (new Keccak(256)).update(str);
@@ -16,27 +17,91 @@ export function NameFromABI(abi: Function | Event): string {
     return abi.name + '(' + typeName + ')';
 }
 
-export function GetRealType(obj: FunctionIO): ts.TypeNode {
-    const type = obj.type;
-    if (/int/i.test(type)) return NumberType;
+export function GetSize(type: string) {
+    return parseInt(type.replace(/.*\[|\].*/gi, ''), 10)
+}
+
+export function GetRealType(type: string): ts.TypeNode {
+    if (/\[\]/i.test(type)) return AsArray(GetRealType(type.replace(/\[\]/, '')));
+    if (/\[.*\]/i.test(type)) return AsTuple(GetRealType(type.replace(/\[.*\]/, '')), GetSize(type));
+    else if (/int/i.test(type)) return NumberType;
     else if (/bool/i.test(type)) return BooleanType;
     else if (/bytes/i.test(type)) return AsRefNode(BufferType);
-    else if (/\[\]/i.test(type)) return AsArray(StringType);
-
-    else if (/tuple/i.test(type)) return TupleType(obj.components.map(comp => GetRealType(comp)));
     else return StringType; // address, bytes
 }
 
-export function OutputToType(abi: Function) {
-    if (abi.outputs.length === 0) return VoidType;
-
-    const named = abi.outputs.filter(out => out.name !== "")
-    if (abi.outputs.length === named.length)
-        return ts.createTypeLiteralNode(abi.outputs.map(out => ts.createPropertySignature(
+export function OutputToType(sig: Signature) {
+    if (sig.outputs.length === 0) return VoidType;
+    const named = sig.outputs.filter(out => out !== undefined && out.name !== "")
+    if (sig.outputs.length === named.length)
+        return ts.createTypeLiteralNode(sig.outputs.map(out => ts.createPropertySignature(
                 undefined, 
                 out.name, 
                 undefined, 
-                GetRealType(out), 
+                GetRealType(out.type), 
                 undefined)))
-    else return ts.createTupleTypeNode(abi.outputs.map(out => GetRealType(out)));
+    else return ts.createTupleTypeNode(sig.outputs.map(out => GetRealType(out.type)));
+}
+
+export function CollapseInputs(signatures: Array<Signature>) {
+    return signatures.reduce((args, next) => {
+        next.inputs.map(item => {
+            if (!item) return;
+            const prev = args.get(item.name);
+            args.set(item.name, prev ? [...prev, item.type] : [item.type])
+        })
+        return args;
+    }, new Map<string, Array<string>>());
+}
+
+export function CombineTypes(types: Array<string>) {
+    return types.length === 1 ?
+        GetRealType(types[0]) :
+        ts.createUnionTypeNode(types.map(type => GetRealType(type)));
+}
+
+export type InputOutput = {
+    name: string
+    type: string
+};
+export type MethodType = 'function' | 'event';
+export type Signature = {
+    hash: string
+    inputs: Array<InputOutput>
+    outputs?: Array<InputOutput>
+};
+export type Method = {
+    type: MethodType
+    signatures?: Array<Signature>
+};
+export type ContractMethods = Map<string, Method>;
+export type ContractMethodsList = Array<{name: string} & Method>;
+
+export function GetContractMethods(abi: FunctionOrEvent[]) {
+    // solidity allows duplicate function names
+    return Array.from(abi.reduce<ContractMethods>((signatures, abi) => {
+        if (abi.name === "") return signatures;
+        if (abi.type === 'function') {
+            const body = signatures.get(abi.name) || 
+                { 
+                    type: 'function',
+                    signatures: new Array<Signature>(),
+                };
+            
+            body.signatures.push({
+                hash: Hash(NameFromABI(abi)).slice(0, 8),
+                inputs: abi.inputs.filter(abi => abi.name !== "").map(abi => { return { name: abi.name, type: abi.type }}),
+                outputs: abi.outputs.map(abi => { return { name: abi.name, type: abi.type }}),
+            })
+
+            signatures.set(abi.name, body);
+        } else if (abi.type === 'event') {
+            signatures.set(abi.name, { type: 'event' });
+        }
+        return signatures;
+    }, new Map<string, { type: MethodType }>()), ([name, method]) => { return { name: name, type: method.type, signatures: method.signatures }});
+}
+
+export function TokenizeString(input: string) {
+    return input.replace(/\W+/g, "_");
 }

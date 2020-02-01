@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Hash, NameFromABI } from './solidity';
+import { Hash, NameFromABI, GetSize, TokenizeString } from './solidity';
 import { Function } from 'solc';
 
 describe('abi helpers', function () {
@@ -24,5 +24,13 @@ describe('abi helpers', function () {
         ]
     };
     assert.equal(NameFromABI(abi), 'baz(uint32,bool)');
+  })
+
+  it('should strip array size', () => {
+    assert.equal(GetSize('uint[3]'), 3);
+  })
+
+  it('should tokenize string', () => {
+    assert.equal(TokenizeString('sol/Storage.sol:Storage'), 'sol_Storage_sol_Storage')
   })
 })

@@ -22,6 +22,7 @@ export const CreateCall = (fn: ts.Expression, args: ts.Expression[]) => ts.creat
 export const AccessThis = (name: ts.Identifier) => ts.createPropertyAccess(ts.createThis(), name);
 export const BufferFrom = (...args: ts.Expression[]) => CreateCall(ts.createPropertyAccess(BufferType, ts.createIdentifier("from")), args);
 export const AsArray = (type: ts.TypeNode) => ts.createArrayTypeNode(type);
+export const AsTuple = (type: ts.TypeNode, size: number) => ts.createTupleTypeNode(Array(size).fill(type));
 export const AsRefNode = (id: ts.Identifier) => ts.createTypeReferenceNode(id, undefined);
 
 export function CreateParameter(
@@ -45,6 +46,11 @@ export function CreateParameter(
 export function DeclareConstant(name: ts.Identifier, initializer?: ts.Expression, extern?: boolean) {
     return ts.createVariableStatement(extern ? [ExportToken] : [], ts.createVariableDeclarationList(
             [ts.createVariableDeclaration(name, undefined, initializer)], ts.NodeFlags.Const));
+}
+
+export function DeclareLet(name: ts.Identifier, initializer?: ts.Expression, extern?: boolean) {
+    return ts.createVariableStatement(extern ? [ExportToken] : [], ts.createVariableDeclarationList(
+            [ts.createVariableDeclaration(name, undefined, initializer)], ts.NodeFlags.Let));
 }
 
 const resolveFn = ts.createIdentifier("resolve");

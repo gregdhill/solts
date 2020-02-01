@@ -28,3 +28,13 @@ export function ImportLocal(path: string) {
         contents: fs.readFileSync(path).toString()
     }
 }
+
+export function TokenizeLinks(links: Record<string, Record<string, any>>) {
+    const libraries: Array<string> = [];
+    for (const file in links) {
+        for (const library in links[file]) {
+            libraries.push(file + ':' + library)
+        }
+    }
+    return libraries;    
+}
