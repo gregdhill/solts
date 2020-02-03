@@ -1,13 +1,12 @@
 import ts from "typescript";
-import { Function, Event } from 'solc';
 import { Provider, ErrParameter, EventParameter } from './provider';
 import { 
-    StringType, PromiseType, ReadableType,
-    PrivateToken, ExportToken, BufferFrom, AccessThis, DeclareConstant, AsRefNode, Method,
-    CreateParameter, CreateCall, CreateCallbackExpression, CreateCallbackDeclaration, CreateNewPromise, RejectOrResolve, Uint8ArrayType, PublicToken
+    StringType, ReadableType,
+    PrivateToken, ExportToken, AccessThis, DeclareConstant, AsRefNode, Method,
+    CreateParameter, CreateCall, CreateCallbackExpression, Uint8ArrayType, PublicToken
 } from './syntax';
 
-import { Hash, NameFromABI, GetRealType, OutputToType, FunctionOrEvent, ContractMethods, Signature, CollapseInputs, CombineTypes, ContractMethodsList } from './solidity';
+import { OutputToType, Signature, CollapseInputs, CombineTypes, ContractMethodsList } from './solidity';
 import { EncodeName } from "./encoder";
 import { DecodeName } from "./decoder";
 import { CallName } from "./caller";
@@ -19,7 +18,7 @@ const address = ts.createIdentifier("address");
 
 export const ContractName = ts.createIdentifier('Contract');
 
-function SolidityFunction(name: string, signatures: Signature[], provider: Provider) {
+function SolidityFunction(name: string, signatures: Signature[]) {
     const args = Array.from(CollapseInputs(signatures).keys()).map(key => ts.createIdentifier(key));
     const encode = DeclareConstant(data, 
         CreateCall(ts.createPropertyAccess(CreateCall(EncodeName, [AccessThis(client)]), name), args));
@@ -74,7 +73,7 @@ function SolidityEvent(name: string, provider: Provider) {
 }
 
 function createMethodFromABI(name: string, type: 'function' | 'event', signatures: Signature[], provider: Provider) {
-    if (type === 'function') return SolidityFunction(name, signatures, provider);
+    if (type === 'function') return SolidityFunction(name, signatures);
     else if (type === 'event') return SolidityEvent(name, provider);
 }
 

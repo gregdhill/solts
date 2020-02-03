@@ -5,13 +5,12 @@ import { Caller } from './lib/caller';
 import { Encode } from './lib/encoder';
 import { Decode } from './lib/decoder';
 import { Contract } from './lib/contract';
-import { Function } from 'solc';
 import { ExportToken } from "./lib/syntax";
 import { Deploy } from "./lib/deployer";
-import { GetContractMethods, FunctionOrEvent } from "./lib/solidity";
+import { GetContractMethods } from "./lib/solidity";
 import { Replacer } from "./lib/replacer";
+import { ABI } from "./lib/abi";
 
-export * from 'solc';
 export { 
     InputDescriptionFromFiles,
     ImportLocal,
@@ -22,7 +21,7 @@ export {
 
 export type Compiled = {
     name: string
-    abi: FunctionOrEvent[]
+    abi: ABI.FunctionOrEvent[]
     bin: string
     links: Array<string>
 }
@@ -38,7 +37,7 @@ export function NewFile(contracts: Compiled[]): ts.Node[] {
         ...contracts.map(contract => {
             const methods = GetContractMethods(contract.abi);
 
-            let deploy: Function;
+            let deploy: ABI.Function;
             contract.abi.map(abi => { if (abi.type == 'constructor') deploy = abi });
         
             return ts.createModuleDeclaration(

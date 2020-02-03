@@ -1,8 +1,7 @@
 import ts from "typescript";
-import { CreateParameter, Uint8ArrayType, DeclareConstant, VoidType } from "./syntax";
+import { CreateParameter, Uint8ArrayType, DeclareConstant } from "./syntax";
 import { Provider } from "./provider";
-import { Function, Event } from 'solc';
-import { OutputToType, ContractMethods, CombineTypes, Signature, ContractMethodsList } from './solidity';
+import { OutputToType, Signature, ContractMethodsList } from './solidity';
 
 export const DecodeName = ts.createIdentifier('Decode');
 

@@ -1,19 +1,16 @@
 import ts from "typescript";
 import { Keccak } from 'sha3';
-import { Function, FunctionInput, FunctionOutput, Event, EventInput } from 'solc';
+import { ABI } from './abi';
 import { StringType, NumberType, BooleanType, TupleType, BufferType, VoidType, AsRefNode, AsArray, AsTuple } from './syntax';
-
-export type FunctionIO = FunctionInput & FunctionOutput;
-export type FunctionOrEvent = Function | Event;
 
 export function Hash(str: string) {
     const hash = (new Keccak(256)).update(str);
     return hash.digest('hex').toUpperCase();
 }
 
-export function NameFromABI(abi: Function | Event): string {
+export function NameFromABI(abi: ABI.Function | ABI.Event): string {
     if (abi.name.indexOf('(') !== -1) return abi.name;
-    const typeName = (abi.inputs as (EventInput | FunctionIO)[]).map(i => i.type).join();
+    const typeName = (abi.inputs as (ABI.EventInput | ABI.FunctionIO)[]).map(i => i.type).join();
     return abi.name + '(' + typeName + ')';
 }
 
@@ -77,7 +74,7 @@ export type Method = {
 export type ContractMethods = Map<string, Method>;
 export type ContractMethodsList = Array<{name: string} & Method>;
 
-export function GetContractMethods(abi: FunctionOrEvent[]) {
+export function GetContractMethods(abi: ABI.FunctionOrEvent[]) {
     // solidity allows duplicate function names
     return Array.from(abi.reduce<ContractMethods>((signatures, abi) => {
         if (abi.name === "") return signatures;

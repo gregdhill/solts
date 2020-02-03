@@ -1,10 +1,10 @@
 import ts from "typescript";
 import { CreateParameter, DeclareConstant, CreateNewPromise, PromiseType, CreateCallbackDeclaration, RejectOrResolve, CreateCall, BufferFrom, ExportToken, DeclareLet, StringType } from "./syntax";
 import { Provider } from "./provider";
-import { Function } from 'solc';
 import { GetRealType, TokenizeString, Hash } from './solidity';
 import { ContractName } from "./contract";
 import { ReplacerName } from "./replacer";
+import { ABI } from "./abi";
 
 const data = ts.createIdentifier("data");
 const payload = ts.createIdentifier("payload");
@@ -18,7 +18,7 @@ const address = ts.createIdentifier("address");
 
 export const DeployName = ts.createIdentifier('Deploy');
 
-export const Deploy = (abi: Function, bin: string, links: string[], provider: Provider) => {
+export const Deploy = (abi: ABI.Function, bin: string, links: string[], provider: Provider) => {
     if (bin === "") return undefined;
 
     const parameters = (abi) ? abi.inputs.map(input => CreateParameter(input.name, GetRealType(input.type))) : [];

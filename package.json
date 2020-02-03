@@ -1,6 +1,6 @@
 {
   "name": "solts",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Solidity to Typescript",
   "main": "bin/api.js",
   "types": "bin/api.d.ts",
@@ -10,8 +10,7 @@
     "start": "node bin/main.js"
   },
   "files": [
-    "bin/",
-    "proto/"
+    "bin/"
   ],
   "bin": {
     "ts-sol": "bin/main.js"
@@ -24,7 +23,6 @@
     "commander": "^4.1.0",
     "mocha": "^7.0.0",
     "sha3": "^2.1.1",
-    "solc": "^0.6.1",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"
   }

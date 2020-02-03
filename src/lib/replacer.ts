@@ -1,7 +1,5 @@
 import ts from "typescript";
-import { 
-    StringType, CreateParameter, DeclareConstant, CreateCall 
-} from "./syntax";
+import { StringType, CreateParameter, DeclareConstant, CreateCall } from "./syntax";
 
 export const ReplacerName = ts.createIdentifier('Replace');
 

@@ -1,8 +1,61 @@
-import { InputDescription, OutputDescription } from 'solc';
-export { InputDescription, OutputDescription };
 import * as fs from 'fs';
 
-function NewInputDescription(): InputDescription {
+export namespace Solidity {
+    type Bytecode = {
+        linkReferences: any
+        object: string
+        opcodes: string
+        sourceMap: string
+    }
+    
+    type Contract = {
+        assembly: any
+        evm: {
+            bytecode: Bytecode
+        }
+        functionHashes: any
+        gasEstimates: any
+        abi: (Function | Event)[]
+        opcodes: string
+        runtimeBytecode: string
+        srcmap: string
+        srcmapRuntime: string
+    }
+    
+    type Source = {
+        AST: any
+    }
+
+    export type InputDescription = {
+        language: string
+        sources?: Record<string, { content: string }>
+        settings?: {
+            outputSelection: Record<string, Record<string, Array<string>>>
+        }
+    }
+
+    type Error = {
+        sourceLocation?: {
+            file: string,
+            start: number,
+            end: number
+        }
+        type: string
+        component: string,
+        severity: "error" | "warning"
+        message: string
+        formattedMessage?: string
+    }
+    
+    export type OutputDescription = {
+        contracts: Record<string, Record<string, Contract>>
+        errors: Array<Error>
+        sourceList: Array<string>
+        sources: Record<string, Source>
+    }
+}
+
+function NewInputDescription(): Solidity.InputDescription {
     return {
         language: 'Solidity',
         sources: {},
@@ -10,8 +63,8 @@ function NewInputDescription(): InputDescription {
     }
 }
 
-export const EncodeInput = (obj: InputDescription): string => JSON.stringify(obj);
-export const DecodeOutput = (str: string): OutputDescription => JSON.parse(str);
+export const EncodeInput = (obj: Solidity.InputDescription): string => JSON.stringify(obj);
+export const DecodeOutput = (str: string): Solidity.OutputDescription => JSON.parse(str);
 
 export function InputDescriptionFromFiles(...names: string[]) {
     const desc = NewInputDescription();

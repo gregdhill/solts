@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { Hash, NameFromABI, GetSize, TokenizeString } from './solidity';
-import { Function } from 'solc';
+import { ABI } from './abi';
 
 describe('abi helpers', function () {
   it('should compute a valid method id', async function () {
@@ -8,7 +8,7 @@ describe('abi helpers', function () {
   })
 
   it('should return the full function name with args', async function () {
-    const abi: Function = { 
+    const abi: ABI.Function = { 
         type: 'function', 
         name: 'baz', 
         stateMutability: 'pure',
