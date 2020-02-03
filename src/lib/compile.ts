@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { ABI } from './abi';
 
 export namespace Solidity {
     type Bytecode = {
@@ -15,7 +16,7 @@ export namespace Solidity {
         }
         functionHashes: any
         gasEstimates: any
-        abi: (Function | Event)[]
+        abi: ABI.FunctionOrEvent[]
         opcodes: string
         runtimeBytecode: string
         srcmap: string

@@ -1,6 +1,6 @@
 {
   "name": "solts",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Solidity to Typescript",
   "main": "bin/api.js",
   "types": "bin/api.d.ts",
