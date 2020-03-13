@@ -38,6 +38,19 @@ class Call extends Method {
     }
 }
 
+class CallSim extends Method {
+    params = [
+        CreateParameter('msg', typeArgument),
+        CreateParameter('callback', CreateCallbackExpression([ErrParameter, ExecParameter]))
+    ];
+    ret = VoidType;
+
+    constructor() { super('callSim') }
+    call(exp: ts.Expression, tx: ts.Identifier, callback: ts.ArrowFunction) {
+        return CreateCall(ts.createPropertyAccess(exp, this.id), [tx, callback]);
+    }
+}
+
 class Listen extends Method {
     params = [
         CreateParameter('signature', StringType),
@@ -100,6 +113,7 @@ export class Provider {
     methods = {
         deploy: new Deploy(),
         call: new Call(),
+        callSim: new CallSim(),
         listen: new Listen(),
         payload: new Payload(),
         encode: new Encode(),
@@ -116,6 +130,7 @@ export class Provider {
             [
                 this.methods.deploy.signature(),
                 this.methods.call.signature(),
+                this.methods.callSim.signature(),
                 this.methods.listen.signature(),
                 this.methods.payload.signature(),
                 this.methods.encode.signature(),

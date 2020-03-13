@@ -69,10 +69,10 @@ export function RejectOrResolve(error: ts.Identifier, statements: ts.Statement[]
         ts.createBlock([...statements, ts.createExpressionStatement(CreateCall(resolveFn, success))]));
 }
 
-export function CreateNewPromise(body: ts.Statement[], returnType?: ts.TypeNode): ts.NewExpression {
+export function CreateNewPromise(body: ts.Statement[], returnType?: ts.TypeNode, multiLine?: boolean): ts.NewExpression {
     return ts.createNew(
         PromiseType, undefined,
-        [CreateCallbackDeclaration(resolveFn, rejectFn, body, returnType, true)],
+        [CreateCallbackDeclaration(resolveFn, rejectFn, body, returnType, multiLine || false)],
     )
 }
 

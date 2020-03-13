@@ -30,6 +30,7 @@ function SolidityFunction(name: string, signatures: Signature[]) {
         AccessThis(client),
         AccessThis(address),
         data,
+        ts.createLiteral(signatures[0].constant),
         ts.createArrowFunction(undefined, undefined, [
             CreateParameter(exec, Uint8ArrayType)
         ], undefined, undefined, ts.createBlock([
@@ -78,7 +79,6 @@ function createMethodFromABI(name: string, type: 'function' | 'event', signature
 }
 
 export const Contract = (abi: ContractMethodsList, provider: Provider) => {
-
     return ts.createClassDeclaration(
         undefined,
         [ExportToken],

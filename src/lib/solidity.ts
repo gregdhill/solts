@@ -64,6 +64,7 @@ export type InputOutput = {
 export type MethodType = 'function' | 'event';
 export type Signature = {
     hash: string
+    constant: boolean
     inputs: Array<InputOutput>
     outputs?: Array<InputOutput>
 };
@@ -84,11 +85,12 @@ export function GetContractMethods(abi: ABI.FunctionOrEvent[]) {
                     type: 'function',
                     signatures: new Array<Signature>(),
                 };
-            
+                
             body.signatures.push({
                 hash: Hash(NameFromABI(abi)).slice(0, 8),
                 inputs: abi.inputs.filter(abi => abi.name !== "").map(abi => { return { name: abi.name, type: abi.type }}),
                 outputs: abi.outputs.map(abi => { return { name: abi.name, type: abi.type }}),
+                constant: abi.constant || false,
             })
 
             signatures.set(abi.name, body);
@@ -96,7 +98,7 @@ export function GetContractMethods(abi: ABI.FunctionOrEvent[]) {
             signatures.set(abi.name, { type: 'event' });
         }
         return signatures;
-    }, new Map<string, { type: MethodType }>()), ([name, method]) => { return { name: name, type: method.type, signatures: method.signatures }});
+    }, new Map<string, { type: MethodType, constant: boolean }>()), ([name, method]) => { return { name: name, type: method.type, signatures: method.signatures }});
 }
 
 export function TokenizeString(input: string) {
