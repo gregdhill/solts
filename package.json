@@ -16,7 +16,7 @@
     "ts-sol": "bin/main.js"
   },
   "author": "Gregory Hill",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "@types/mocha": "^5.2.7",
     "@types/node": "^13.1.8",
